@@ -1,0 +1,177 @@
+/*
+ * Family name: Williams 
+ * Given Name: Michael 
+ * Student Number: 211087798 
+ * EECS Login: mw1992
+ * 
+ * The process program is code for computing the maximum, minimum, largest 
+ * sum and largest difference of individual data sets, as well as the
+ * maximum and minimum value of all the data set values combined. The
+ * program creates a child process for each of the data sets given and
+ * performs calculations, which are sent back to the parent process via
+ * pipes.  The max and min values for each data set are output followed by 
+ * the global max and min value. 
+ */
+
+#include <sys/types.h>
+#include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+// values for read and write for pipes
+#define WRITE 1
+#define READ 0
+
+int
+main(int argc, char *argv[]){
+
+    // global variables
+    FILE           *file_reader;
+    pid_t           p_id;
+    float           global_maximum = -INFINITY;
+    float           global_minimum = +INFINITY;
+    int             count;
+    pid_t          *p_array = malloc(argc * sizeof(pid_t));
+
+    // declaring pipes
+    int             sum_pipe[argc-1][2];
+    int             difference_pipe[argc-1][2];
+
+    // check number of args
+    if (argc < 2) {
+	printf
+	    ("No file names provided.\nPlease enter file names.  Error value %d", stderr);
+	return -1;
+    }
+
+    for (count = 1; count < argc; count++) {
+
+	// check pipes are created properly
+	if (pipe(sum_pipe[count - 1]) == -1) {
+	    printf("failed to create sum_pipe\n. Error value %d", stderr);
+	    return -1;
+	}
+
+	if (pipe(difference_pipe[count - 1]) == -1) {
+	    printf("failed to create difference_pipe\n  Error value %d",
+		   stderr);
+	    return -1;
+	}
+
+	// create child process
+	//printf("%d started\n", count);
+	p_id = fork();
+
+	// check children are created properly
+	if (p_id < 0) {
+	    printf
+		("creation of child process unsuccessful\n  Error value %d", stderr);
+	    return -1;
+	}
+
+	// run child process
+	else if (p_id == 0) {
+
+	    // child process variables
+	    float           child_sum;
+	    float           child_diff;
+	    float           child_min = +INFINITY;
+	    float           child_max = -INFINITY;
+	    float           temp;
+
+	    file_reader = fopen(argv[count], "r");
+
+	    // check for error in fopen
+	    if (file_reader == NULL) {
+		printf("error occured in fopen for %s\n", argv[count]);	
+		continue;
+	    }
+
+	    // read from file and set minimum and maximum value
+	    while (fscanf(file_reader, "%f", &temp) != EOF) {
+
+		if (temp < child_min) {
+		    child_min = temp;
+		}
+
+		if (temp > child_max) {
+		    child_max = temp;
+		}
+
+	    }// while loop
+
+	    child_sum = child_min + child_max;
+	    child_diff = child_min - child_max;
+
+	    // close READ pipes
+	    close(sum_pipe[count-1][READ]);
+	    close(difference_pipe[count-1][READ]);
+
+	    // writing to and closing WRITE pipes
+	    write(sum_pipe[count-1][WRITE], &child_sum, sizeof(child_sum));
+	    close(sum_pipe[count-1][WRITE]);
+
+	    write(difference_pipe[count-1][WRITE], &child_diff, sizeof(child_diff));
+	    close(difference_pipe[count-1][WRITE]);
+
+	    fclose(file_reader);
+	    //printf("%d ended\n", count);
+
+	    exit(1);		
+
+	}// child process
+
+	else {
+
+	    p_array[count - 1] = p_id;
+
+	}// else end
+
+    }// for loop
+
+    for (count = 1; count < argc; count++) {
+
+	// parent process variables
+	float           parent_sum;
+	float           parent_diff;
+	float           parent_min = +INFINITY;
+	float           parent_max = -INFINITY;
+	int             status;
+
+	// waits for all processes to finish
+	waitpid(p_array[count - 1], &status, 0);
+
+	// close WRITE pipes
+	close(sum_pipe[count-1][WRITE]);
+	close(difference_pipe[count-1][WRITE]);
+
+	// writing to and closing READ pipes
+	read(sum_pipe[count-1][READ], &parent_sum, sizeof(parent_sum));
+	close(sum_pipe[count-1][READ]);
+
+	read(difference_pipe[count-1][READ], &parent_diff, sizeof(parent_diff));
+	close(difference_pipe[count-1][READ]);
+
+	// calculate parent_maximum and parent_minimum
+	parent_max = (parent_sum - parent_diff) / 2;
+	parent_min = (parent_sum + parent_diff) / 2;	
+
+	// finding global_maximum and global_minimum values
+	if (parent_min < global_minimum) {
+	    global_minimum = parent_min;
+	}
+
+	if (parent_max > global_maximum) {
+	    global_maximum = parent_max;
+	}
+
+	printf("%s SUM=%0.5f DIF=%0.5f MIN=%0.5f MAX=%0.5f\n", argv[count],
+	       parent_sum, parent_diff, parent_min, parent_max);
+
+    }// for loop
+
+    printf("MINIMUM=%0.5f MAXIMUM=%0.5f\n", global_minimum, global_maximum);
+    return 0;			
+
+}// main method
+

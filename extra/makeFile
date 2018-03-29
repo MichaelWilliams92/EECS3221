@@ -1,0 +1,6 @@
+.PROGRAM : clean
+alarm_mutex : My_Alarm.c
+	cc -o alarm_mutex My_Alarm.c -D_POSIX_PTHREAD_SEMANTICS -lpthread
+	./alarm_mutex
+	clean :
+	-rm *.o$(objects)

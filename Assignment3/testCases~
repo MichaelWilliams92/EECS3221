@@ -1,0 +1,81 @@
+The format of the folowing tested code is as follows.  The first line will be the input given.  The following lines in each segment will be the output produced, exactly as it would be produced when running the program for oneself
+
+								INCORRECT INPUT
+
+1) Wrong number of inputs
+Alarm> 1
+Wrong Input: Please type in the number of seconds at which the alarm should expire, 
+followed by "Message(#)" where # represents the message number, followed by the text of the message. 
+(Example: Alarm> 2 Message(1) Good Morning!)
+
+2) Negative value of time second
+Alarm> -1 Message(1) hi
+Please enter a positive integer from 1 to 2147483647 for alarm time.
+
+3) Too large value of time second (> INT_MAX)
+Alarm> 100000000000 Message(1) hi
+Please enter a positive integer from 1 to 2147483647 for alarm time.
+
+4) Negative value of message_number
+Alarm> 10 Message(-2) hi
+Please enter a positive integer from 1 to 2147483647 for message number.
+
+5) Too large value of message_number
+Alarm> 10 Message(9999999999) hi
+Please enter a positive integer from 1 to 2147483647 for message number.
+
+6) Not in the exact letters for "Message"
+Alarm> 1 MESSAGE(1) hi 
+Wrong Input: Please type in the number of seconds at which the alarm should expire, 
+followed by "Message(#)" where # represents the message number, followed by the text of the message. 
+(Example: Alarm> 2 Message(1) Good Morning!)
+
+7) Wrong input for message_number
+Alarm> 10 Message($) hi
+Wrong Input: Please type in the number of seconds at which the alarm should expire, 
+followed by "Message(#)" where # represents the message number, followed by the text of the message. 
+(Example: Alarm> 2 Message(1) Good Morning!)
+
+8) Trying to delete an alarm that dosen't exist
+Alarm> Cancel: Message(8)
+Alarm request Received at 1449540619: Cancel: Message(8)
+Alarm with a message number, 8, does not exist.
+
+9) Wrong input for cancel request
+Alarm> Cancel: MEssage(1)
+Wrong format:
+	1) Cancel: Message(#) where # must a positive integer between 0 and 2147483647
+	2) #1 Message(#2) message where #1 and #2 must be a positive integer between 0 and 2147483647
+
+10) Sending a negative value for cancel Request
+Alarm> Cancel:Message(-3)       
+Please enter a message number greater than 0 and less than 2147483647.
+
+11) Using a floating point value
+Alarm> Cancel: Message(10.2)
+Please enter an integer with no floating points for the message number.
+
+ 							CORRECT INPUT
+
+The following input is in all done the order of the test cases given, so that all forms of tests could be demonstrated
+
+1) Alarm> 10 Message(1) hello world
+Alarm request Received at 1449541235: 10 Message(1) hello world
+Alarm displayed at 1449541245: 10 Message(1) hello world
+
+2) Alarm> 10 Message(2) second message
+Alarm request Received at 1449541379: 10 Message(2) second message
+Alarm displayed at 1449541389: 10 Message(2) second message
+
+3) Alarm> 10 Message(1) new first
+Alarm request Received at 1449541485: 10 Message(1) new first
+Alarm changed at 1449541487: 10 Message(1) new first
+Alarm displayed at 1449541595: 10 Message(1) new first
+
+4) Alarm> Cancel: Message(1)
+Alarm request Received at 1449541668: Cancel: Message(1)
+Display thread exiting at 1449541670
+
+5) Alarm> Cancel:Message(2)
+Alarm request Received at 1449541757: Cancel:Message(2)
+Display thread exiting at 1449541760
